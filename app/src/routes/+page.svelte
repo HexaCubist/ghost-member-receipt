@@ -156,8 +156,8 @@
 <main class="receipt receipt-after">
 	<h1>Receipt Printer</h1>
 	<p class="balance">
-		Welcome to a web-based receipt printer! Press the button below to connect, and then enter what
-		you'd like printed
+		Hey welcome! This tool helps us print fun little messages whenever a member signs up. You'll
+		need a recept printer and to connect it up with the right values. Good luck!
 	</p>
 	<div class="pt-3 flex flex-wrap items-end gap-3 justify-center">
 		{#if !loaded}
