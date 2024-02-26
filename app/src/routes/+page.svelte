@@ -12,7 +12,9 @@
 	// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 	// The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 	// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-	import fortunes from '$lib/fortunes.txt';
+	import fortunes from '$lib/fortunes.txt?raw';
+	import logo from './logo.png';
+	import footer from './footer.png';
 
 	const capabilityList = (browser || dev ? capabilities : capabilities.default).models.map(
 		(m) => m.model
@@ -48,31 +50,70 @@
 		loaded = true;
 	};
 	let processing = false;
+
+	async function printImage(printer: Printer, src: string) {
+		// Create canvas
+		const canvas = document.createElement('canvas');
+		const ctx = canvas.getContext('2d');
+		if (!ctx) return;
+
+		// Create image
+		await new Promise<void>((resolve) => {
+			const img = new Image();
+			img.onload = () => {
+				let scaleFactor = Math.min($MaxDPI || 384, img.naturalWidth) / img.naturalWidth;
+				canvas.width = img.naturalWidth * scaleFactor;
+				canvas.height = img.naturalHeight * scaleFactor;
+				ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+				resolve();
+			};
+			img.src = src;
+		});
+		// Get image data
+		let image_data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+		// Print
+		const image = new EscImage({
+			data: image_data.data as any,
+			width: image_data.width,
+			height: image_data.height
+		});
+		await printer.draw(image);
+	}
 	const fortuneItems = fortunes.split('\n');
-	const print = async () => {
-		const textToPrint = fortuneItems[Math.floor(Math.random() * fortuneItems.length)];
+	const print = async (name = false) => {
+		let textToPrint = fortuneItems[Math.floor(Math.random() * fortuneItems.length)];
 		if (!printer) {
 			console.log(textToPrint);
 			return;
 		}
 		try {
+			printer.feed(1);
+			await printImage(printer, logo);
+			if (name) {
+				textToPrint = `Thanks for registering ${name}!\n${textToPrint}`;
+			}
+			printer.feed(1);
 			await printer.withStyle(
 				{
-					// italic: true,
-					bold: true,
-					align: Align.Center
+					align: Align.Center,
+					height: 1,
+					width: 1
 				},
 				async () => {
 					const wrappedLines = wrap(textToPrint.replaceAll(/[^\x00-\x7F]+/g, ' '), {
-						width: $numCols - 2,
+						width: $numCols,
 						trim: true
 					}).split('\n');
+					console.log(wrappedLines);
 					for (const line of wrappedLines) {
-						await printer!.writeln(line);
+						await printer!.writeln(line.trim());
 					}
 				}
 			);
-			await printer.feed(3);
+			printer.feed(1);
+			await printImage(printer, footer);
+			await printer.feed(4);
 			await printer.cutter();
 			showFiles = false;
 		} catch (error) {
@@ -94,6 +135,12 @@
 				on:click={() => {
 					connect();
 				}}>Connect to printer</button
+			>
+		{:else}
+			<button
+				on:click={() => {
+					print();
+				}}>Manually dispense fortune</button
 			>
 		{/if}
 		<div class="flex gap-3 flex-nowrap">
@@ -139,6 +186,7 @@
 			</label>
 		</div>
 	</div>
+
 	{#if processing}
 		<div
 			class="absolute inset-0 bg-white bg-opacity-80 backdrop-blur flex justify-center align-middle items-center"
