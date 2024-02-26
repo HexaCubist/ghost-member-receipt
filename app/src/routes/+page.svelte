@@ -121,6 +121,34 @@
 			return;
 		}
 	};
+
+	let lastMemberCount: number | false = false;
+	let interval: number;
+	let refreshing = false;
+	$: if (loaded) {
+		if (interval) clearInterval(interval);
+		interval = setInterval(async () => {
+			if (loaded) {
+				refreshing = true;
+				await fetch('/memberCount')
+					.then((res) => res.json())
+					.then((data) => {
+						if (lastMemberCount === false) {
+							lastMemberCount = data.count;
+						} else if (lastMemberCount < data.count) {
+							const newMembers = data.count - lastMemberCount;
+							lastMemberCount = data.count as number;
+							for (let i = 0; i < newMembers; i++) {
+								// Get the name of the new member. First in the list is the most recent
+								const name = data.members[i];
+								print(name);
+							}
+						}
+					});
+				refreshing = false;
+			}
+		}, 1000);
+	}
 </script>
 
 <main class="receipt receipt-after">
@@ -138,6 +166,7 @@
 			>
 		{:else}
 			<button
+				class="!bg-green-800"
 				on:click={() => {
 					print();
 				}}>Manually dispense fortune</button
@@ -195,6 +224,11 @@
 			<div class="text-6xl text-center animate-bounce">❤️‍🔥</div>
 		</div>
 	{/if}
+	<div class="text-center my-4 h-6">
+		{#if refreshing}
+			<div transition:fade>Refreshing... {lastMemberCount} members</div>
+		{/if}
+	</div>
 </main>
 
 <style lang="postcss">
