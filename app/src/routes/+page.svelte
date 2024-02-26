@@ -93,7 +93,14 @@
 			width: image_data.width,
 			height: image_data.height
 		});
-		await printer.draw(image);
+		await printer.withStyle(
+			{
+				align: Align.Center
+			},
+			async () => {
+				await printer.draw(image);
+			}
+		);
 	}
 	const print = async (name = false) => {
 		let textToPrint = randomFortune();
