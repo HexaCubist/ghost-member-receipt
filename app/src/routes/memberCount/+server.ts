@@ -1,21 +1,24 @@
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { env } from '$env/dynamic/private';
-import GhostAdminAPI from '@tryghost/admin-api';
+import { TSGhostAdminAPI } from '@ts-ghost/admin-api';
 
-const api = new GhostAdminAPI({
-	url: 'https://makeuoa.nz',
-	key: env.GHOST_API_KEY,
-	version: 'v5.0'
-});
+const api = new TSGhostAdminAPI(
+	process.env.GHOST_URL || 'https://makeuoa.nz',
+	env.GHOST_API_KEY || '',
+	'v5.47.0'
+);
 
 export const GET: RequestHandler = async ({ url }) => {
-	const members = await api.members.browse({ limit: 5 });
-	const memberCount = members.meta.pagination.total;
-	return json({
-		count: memberCount,
-		members: members.map((m: any) => {
-			return m.name.split(' ')[0];
-		})
-	});
+	const members = await api.members.browse({ limit: 5 }).paginate();
+	if (members.current.success) {
+		const memberCount = members.current.meta.pagination.total;
+		return json({
+			count: memberCount,
+			members: members.current.data.map((m: any) => {
+				return m.name.split(' ')[0];
+			})
+		});
+	}
+	return error(500, JSON.stringify(members.current.errors));
 };
