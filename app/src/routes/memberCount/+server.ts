@@ -10,7 +10,6 @@ const api = new GhostAdminAPI({
 });
 
 export const GET: RequestHandler = async ({ url }) => {
-	console.log('Fetching member count');
 	const members = await api.members.browse({ limit: 5 });
 	const memberCount = members.meta.pagination.total;
 	return json({
