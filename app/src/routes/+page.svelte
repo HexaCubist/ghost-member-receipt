@@ -15,6 +15,19 @@
 	import fortunes from '$lib/fortunes.txt?raw';
 	import logo from './logo.png';
 	import footer from './footer.png';
+	import { onMount } from 'svelte';
+
+	const fortuneItems = fortunes.split('\n');
+	const randomFortune = () => {
+		return fortuneItems[Math.floor(Math.random() * fortuneItems.length)];
+	};
+
+	let demoFortune = '';
+	onMount(() => {
+		setTimeout(() => {
+			demoFortune = randomFortune();
+		}, 500);
+	});
 
 	const capabilityList = (browser || dev ? capabilities : capabilities.default).models.map(
 		(m) => m.model
@@ -82,9 +95,8 @@
 		});
 		await printer.draw(image);
 	}
-	const fortuneItems = fortunes.split('\n');
 	const print = async (name = false) => {
-		let textToPrint = fortuneItems[Math.floor(Math.random() * fortuneItems.length)];
+		let textToPrint = randomFortune();
 		if (!printer) {
 			console.log(textToPrint);
 			return;
@@ -249,6 +261,23 @@
 		{/if}
 	</div>
 </main>
+
+{#if demoFortune}
+	<button
+		on:click={() => {
+			demoFortune = '';
+			setTimeout(() => {
+				demoFortune = randomFortune();
+			}, 2000);
+		}}
+		class="receipt receipt-after receipt-before hover:bg-white block mx-auto"
+		transition:fade
+	>
+		<p class="text-center text-gray-600 text-lg">
+			{demoFortune}
+		</p>
+	</button>
+{/if}
 
 <style lang="postcss">
 	:global(body) {
