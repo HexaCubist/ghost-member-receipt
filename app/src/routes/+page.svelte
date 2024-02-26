@@ -28,6 +28,8 @@
 	let chosenModel = persisted<SupportedModel>('printer-model', 'POS-80');
 	let numCols = persisted<number>('printer-cols', 32);
 	let MaxDPI = persisted<number>('printer-dpi', 384);
+	let configVal = persisted<number | undefined>('usb-config', undefined);
+	let ifaceNum = persisted<number | undefined>('usb-iface', undefined);
 
 	let printer: Printer | undefined = undefined;
 	let connection: WebUSB | undefined = undefined;
@@ -39,7 +41,7 @@
 				// }
 			]
 		});
-		connection = new WebUSB(device);
+		connection = new WebUSB(device, $configVal || undefined, $ifaceNum || undefined);
 		await refreshConnection();
 	};
 	const refreshConnection = async () => {
@@ -215,6 +217,23 @@
 			</label>
 		</div>
 	</div>
+	{#if !loaded}
+		<div out:slide>
+			<h2 class="text-center w-full block text-2xl mt-6 mb-2 font-semibold">Advanced Settings:</h2>
+			<div class="flex gap-3 flex-nowrap justify-center">
+				<label class="input-label">
+					<span class="text-gray-700"> USB Config # </span>
+
+					<input type="number" bind:value={$configVal} placeholder="Default" />
+				</label>
+				<label class="input-label">
+					<span class="text-gray-700"> Interface # </span>
+
+					<input type="number" bind:value={$ifaceNum} placeholder="Default" />
+				</label>
+			</div>
+		</div>
+	{/if}
 
 	{#if processing}
 		<div
