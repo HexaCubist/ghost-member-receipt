@@ -18,14 +18,17 @@
 	import { onMount } from 'svelte';
 
 	const fortuneItems = fortunes.split('\n');
+	let lastIndex = 0;
+	let lastFortune = '';
 	const randomFortune = () => {
-		return fortuneItems[Math.floor(Math.random() * fortuneItems.length)];
+		lastIndex = Math.floor(Math.random() * fortuneItems.length);
+		lastFortune = fortuneItems[lastIndex];
+		return fortuneItems[lastIndex];
 	};
 
-	let demoFortune = '';
 	onMount(() => {
 		setTimeout(() => {
-			demoFortune = randomFortune();
+			randomFortune();
 		}, 500);
 	});
 
@@ -269,19 +272,20 @@
 	</div>
 </main>
 
-{#if demoFortune}
+{#if lastFortune}
 	<button
 		on:click={() => {
-			demoFortune = '';
+			lastFortune = '';
 			setTimeout(() => {
-				demoFortune = randomFortune();
+				randomFortune();
 			}, 2000);
 		}}
 		class="receipt receipt-after receipt-before hover:bg-white block mx-auto"
 		transition:fade
 	>
 		<p class="text-center text-gray-600 text-lg">
-			{demoFortune}
+			{lastIndex} / {fortuneItems.length}:
+			{lastFortune}
 		</p>
 	</button>
 {/if}
